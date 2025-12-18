@@ -112,7 +112,8 @@ router.delete('/trendy-items/:id', adminAuth, async (req, res) => {
 // Image upload
 router.post('/upload', adminAuth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-  const imageUrl = `/uploads/${req.file.filename}`;
+  const baseUrl = process.env.NODE_ENV === 'production' ? 'https://foodorderbackend-fhmg.onrender.com' : 'http://localhost:5000';
+  const imageUrl = `${baseUrl}/uploads/${req.file.filename}`;
   res.json({ url: imageUrl });
 });
 
