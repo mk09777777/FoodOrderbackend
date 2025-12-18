@@ -9,11 +9,17 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const restaurantRoutes = require('./routes/restaurant');
 const cartRoutes = require('./routes/cart');
+const adminRoutes = require('./routes/admin');
+const restaurantDashboardRoutes = require('./routes/restaurant-dashboard');
+const publicRoutes = require('./routes/public');
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(session({
   secret: process.env.JWT_SECRET,
@@ -28,6 +34,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/restaurant-dashboard', restaurantDashboardRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/uploads', express.static('uploads'));
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)
