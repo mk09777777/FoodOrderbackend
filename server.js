@@ -18,7 +18,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://foodorderbackend-fhmg.onrender.com'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'https://foodorderbackend-fhmg.onrender.com', 'https://admin-1hyscc0in-mk09777777s-projects.vercel.app'],
   credentials: true
 }));
 app.use(express.json());
