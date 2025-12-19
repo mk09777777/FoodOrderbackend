@@ -237,4 +237,24 @@ router.delete('/highlights/:id', adminAuth, async (req, res) => {
   }
 });
 
+// Get restaurant access for admin
+router.post('/restaurant-access/:restaurantId', adminAuth, async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.restaurantId);
+    if (!restaurant) return res.status(404).json({ message: 'Restaurant not found' });
+    
+    const token = jwt.sign({ id: restaurant._id, role: 'restaurant' }, process.env.JWT_SECRET);
+    res.json({ 
+      token, 
+      restaurant: { 
+        id: restaurant._id, 
+        name: restaurant.name, 
+        email: restaurant.contact.email 
+      } 
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

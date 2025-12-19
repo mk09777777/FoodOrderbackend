@@ -1,7 +1,9 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 const Restaurant = require('../models/Restaurant');
+const Order = require('../models/Order');
 const router = express.Router();
 
 // Restaurant auth middleware
@@ -135,6 +137,58 @@ router.put('/items/:itemId/availability', restaurantAuth, async (req, res) => {
     res.json(item);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+// Order Management
+router.get('/orders', restaurantAuth, async (req, res) => {
+  try {
+    const orders = await Order.find({ restaurant: req.restaurant.id })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.put('/orders/:orderId/status', restaurantAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.orderId, restaurant: req.restaurant.id },
+      { status },
+      { new: true }
+    );
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    res.json(order);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Analytics
+router.get('/analytics', restaurantAuth, async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const [todayOrders, totalOrders, revenue] = await Promise.all([
+      Order.countDocuments({ restaurant: req.restaurant.id, createdAt: { $gte: today } }),
+      Order.countDocuments({ restaurant: req.restaurant.id }),
+      Order.aggregate([
+        { $match: { restaurant: mongoose.Types.ObjectId(req.restaurant.id), status: 'delivered' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      ])
+    ]);
+    
+    res.json({
+      todayOrders,
+      totalOrders,
+      totalRevenue: revenue[0]?.total || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 
