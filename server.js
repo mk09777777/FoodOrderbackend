@@ -12,6 +12,7 @@ const cartRoutes = require('./routes/cart');
 const adminRoutes = require('./routes/admin');
 const restaurantDashboardRoutes = require('./routes/restaurant-dashboard');
 const publicRoutes = require('./routes/public');
+const seedRoutes = require('./routes/seed');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/restaurant-dashboard', restaurantDashboardRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/seed', seedRoutes);
 app.use('/uploads', express.static('uploads'));
 
 // MongoDB connection

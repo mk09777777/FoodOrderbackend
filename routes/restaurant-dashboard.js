@@ -24,7 +24,73 @@ const restaurantAuth = (req, res, next) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const restaurant = await Restaurant.findOne({ 'contact.email': email });
+    let restaurant = await Restaurant.findOne({ 'contact.email': email });
+    
+    // Auto-create Spice Villa if it doesn't exist
+    if (!restaurant && email === 'owner@spicevilla.com') {
+      const spiceVillaData = {
+        name: "Spice Villa",
+        cuisines: ["Indian", "North Indian", "Biryani", "Curry"],
+        rating: 4.3,
+        totalRatings: 1250,
+        address: {
+          street: "123 Food Street",
+          area: "Connaught Place",
+          city: "New Delhi",
+          pincode: "110001",
+          fullAddress: "123 Food Street, Connaught Place, New Delhi - 110001"
+        },
+        contact: {
+          phone: "+91-9876543210",
+          email: "owner@spicevilla.com"
+        },
+        openingHours: {
+          open: "10:00 AM",
+          close: "11:00 PM",
+          isOpen: true
+        },
+        delivery: {
+          time: "30-45 mins",
+          fee: 40,
+          minOrder: 200
+        },
+        items: [
+          {
+            dish: "Chicken Biryani",
+            restaurant: "Spice Villa",
+            img: "https://foodorderbackend-fhmg.onrender.com/uploads/chicken-biryani.jpg",
+            description: "Aromatic basmati rice cooked with tender chicken pieces and traditional spices",
+            type: false,
+            offer: 15,
+            actualPrice: "350",
+            offerPrice: "299",
+            nutrition: { Calories: "520", Protein: "28g", Fat: "18g", Carbs: "65g", Fiber: "3g" },
+            allergicIngredients: ["Dairy", "Nuts"],
+            sizes: [{ name: "Regular", price: 299 }, { name: "Large", price: 399 }],
+            addons: [{ name: "Extra Raita", price: 30 }, { name: "Boiled Egg", price: 20 }],
+            isAvailable: true
+          },
+          {
+            dish: "Paneer Butter Masala",
+            restaurant: "Spice Villa",
+            img: "https://foodorderbackend-fhmg.onrender.com/uploads/paneer-butter-masala.jpg",
+            description: "Rich and creamy tomato-based curry with soft paneer cubes",
+            type: true,
+            offer: 10,
+            actualPrice: "280",
+            offerPrice: "252",
+            nutrition: { Calories: "380", Protein: "18g", Fat: "22g", Carbs: "25g", Fiber: "4g" },
+            allergicIngredients: ["Dairy", "Nuts"],
+            sizes: [{ name: "Half", price: 252 }, { name: "Full", price: 350 }],
+            addons: [{ name: "Butter Naan", price: 45 }, { name: "Jeera Rice", price: 80 }],
+            isAvailable: true
+          }
+        ]
+      };
+      restaurant = new Restaurant(spiceVillaData);
+      await restaurant.save();
+    }
+    
     if (!restaurant) {
       return res.status(401).json({ message: 'Restaurant not found' });
     }
