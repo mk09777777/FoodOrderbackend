@@ -4,6 +4,10 @@ const trendyItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   image: { type: String, required: true },
   category: { type: String, required: true },
+  actualPrice: { type: Number, required: true },
+  offerPrice: { type: Number, required: true },
+  restaurant: { type: String, default: 'Trendy Foods' },
+  description: String,
   isActive: { type: Boolean, default: true },
   order: { type: Number, default: 0 }
 });
