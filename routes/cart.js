@@ -1,5 +1,8 @@
 const express = require('express');
 const Cart = require('../models/Cart');
+const Order = require('../models/Order');
+const Restaurant = require('../models/Restaurant');
+const User = require('../models/User');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
@@ -89,6 +92,81 @@ router.delete('/clear', auth, async (req, res) => {
       await cart.save();
     }
     res.json({ message: 'Cart cleared' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Checkout - Create order from cart
+router.post('/checkout', auth, async (req, res) => {
+  try {
+    const { deliveryAddress, phone, notes } = req.body;
+    
+    const cart = await Cart.findOne({ userId: req.userId });
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: 'Cart is empty' });
+    }
+    
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Get restaurant from first item (assuming single restaurant orders)
+    const firstItem = cart.items[0];
+    const restaurant = await Restaurant.findOne({ name: firstItem.restaurant });
+    if (!restaurant) {
+      return res.status(404).json({ message: 'Restaurant not found' });
+    }
+    
+    // Generate order number
+    const orderNumber = 'ORD' + Date.now();
+    
+    // Create order items
+    const orderItems = cart.items.map(item => ({
+      dish: item.dish,
+      quantity: item.quantity,
+      price: item.price,
+      addons: item.selectedAddons || [],
+      size: item.selectedSize || null
+    }));
+    
+    // Calculate delivery fee
+    const deliveryFee = restaurant.delivery?.fee || 0;
+    const totalAmount = cart.totalAmount + deliveryFee;
+    
+    // Create order
+    const order = new Order({
+      orderNumber,
+      restaurant: restaurant._id,
+      customer: {
+        name: user.name,
+        phone: phone || user.phone,
+        email: user.email,
+        address: deliveryAddress
+      },
+      items: orderItems,
+      totalAmount,
+      deliveryFee,
+      notes,
+      estimatedDeliveryTime: new Date(Date.now() + (restaurant.delivery?.time || 30) * 60000)
+    });
+    
+    await order.save();
+    
+    // Clear cart after successful order
+    cart.items = [];
+    cart.totalAmount = 0;
+    await cart.save();
+    
+    res.status(201).json({ 
+      message: 'Order placed successfully', 
+      order: {
+        orderNumber: order.orderNumber,
+        totalAmount: order.totalAmount,
+        estimatedDeliveryTime: order.estimatedDeliveryTime
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
